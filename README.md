@@ -1,5 +1,7 @@
 # hereyouARE
-Agile Rescue Engine: open source dog tracker based on Arduino compatible board
+Agile Rescue Engine: open source dog tracker based on Arduino compatible board.
+
+Refer to http://enerduino.blogspot.com
 
 It needs the Xadow libraries to compile:
   https://github.com/Seeed-Studio/Xadow_MainBoard
