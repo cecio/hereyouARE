@@ -21,8 +21,8 @@ It needs the Xadow libraries to compile:
   INFO#              Sends debug infos to calling number
  
  
- Programming:
- ===========
+Programming:
+===========
  
  
  send SMS with the following format to program the device
