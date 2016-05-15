@@ -8,12 +8,13 @@ It needs the Xadow libraries to compile:
  
  send SMS with the following format to trigger functions
  
- TRACK#ON#<sec>     Sends SMS with GPS position every <sec> to Primary Number
- TRACK#OFF          Stops track functions
- UBIDOTS#ON         Sets the Ubidots tracking ON or OFF
- GETPOS#            Get the position via SMS instead of via call (useful when out of GSM coverage)
- GETPOSGSM#         Get the position vis GSM cells (useful when out of GPS coverage)
- INFO#              Sends debug infos to calling number
+  TRACK#ON#<sec>     Sends SMS with GPS position every <sec> to Primary Number
+  TRACK#OFF          Stops track functions
+  UBIDOTS#ON         Sets the Ubidots tracking ON or OFF
+  GETPOS#            Get the position via SMS instead of via call (useful when out of GSM coverage)
+  GETPOSGSM#         Get the position vis GSM cells (useful when out of GPS coverage)
+  INFO#              Sends debug infos to calling number
+ 
  
  Programming:
  
