@@ -5,7 +5,7 @@
  *
  * It needs the Xadow libraries to compile:
  * https://github.com/Seeed-Studio/Xadow_MainBoard
- * 
+ *
  * Functions:
  *
  * send SMS with the following format to trigger functions
@@ -63,7 +63,7 @@
  *
  * avrdude -c avr109 -p atmega32u4 -P/dev/ttyACM0 -b57600 -Uflash:w:<filename.hex>:i
  *
- * $Id: hereyouAREx.ino,v 2.0 2016/05/15 13:57:51 cesare Exp cesare $
+ * $Id: hereyouAREx.ino,v 2.1 2016/06/05 14:26:51 cesare Exp $
  *
  * TODO:
  * - Test safe are with 4 digits
@@ -474,7 +474,7 @@ void sendPosSMS(const char* tel, const char* coord, const char* alt, const char*
 	// Compose and send SMS
 	getATReply(F("AT+CMGF=1"), atTimeout); // Select TEXT mode
 	Serial1.print(F("AT+CMGS=\""));
-	sprintf(tmpBuff, "%s", tel);
+	snprintf(tmpBuff, 19, "%s", tel);
 	Serial1.print(tmpBuff);
 	Serial1.println("\"");
 	delay(100);
@@ -490,14 +490,14 @@ void sendPosSMS(const char* tel, const char* coord, const char* alt, const char*
 	if ( strcasecmp(measureUnit_conf, "METRIC") != 0 )
 	{
 		// Convert altitude in foot
-		sprintf(tmpBuff, "%d", int(tmpAlt * 3.2808));
+		snprintf(tmpBuff, 19, "%d", int(tmpAlt * 3.2808));
 		Serial1.print(tmpBuff);
 		Serial1.print(F(" feet"));
 	}
 	else
 	{
 		// Print altitude in meters
-		sprintf(tmpBuff, "%d", tmpAlt);
+		snprintf(tmpBuff, 19, "%d", tmpAlt);
 		Serial1.print(tmpBuff);
 		Serial1.print(F(" meters"));
 	}
@@ -509,14 +509,14 @@ void sendPosSMS(const char* tel, const char* coord, const char* alt, const char*
 	if ( strcasecmp(measureUnit_conf, "METRIC") != 0 )
 	{
 		// Convert speed in mph
-		sprintf(tmpBuff, "%d", int(tmpSpeed * 0.6213));
+		snprintf(tmpBuff, 19, "%d", int(tmpSpeed * 0.6213));
 		Serial1.print(tmpBuff);
 		Serial1.print(F(" Mph"));
 	}
 	else
 	{
 		// Print speed in Kmh
-		sprintf(tmpBuff, "%d", tmpSpeed);
+		snprintf(tmpBuff, 19, "%d", tmpSpeed);
 		Serial1.print(tmpBuff);
 		Serial1.print(F(" Kmh"));
 	}
@@ -525,7 +525,7 @@ void sendPosSMS(const char* tel, const char* coord, const char* alt, const char*
 	if ( gpsFix > 0 )
 	{
 		Serial1.print(F("Number of Sat: "));
-		sprintf(tmpBuff, "%d", satNum);
+		snprintf(tmpBuff, 19, "%d", satNum);
 		Serial1.print(tmpBuff);
 	}
 	else
@@ -544,14 +544,14 @@ void sendPosSMS(const char* tel, const char* coord, const char* alt, const char*
 #endif
 }
 
-void sendGsmPosSMS(const char* tel, const char* mcc, const char* mnc, const char* cellid, const char* lac)
+void sendGsmPosSMS(const char* tel, char* mcc, char* mnc, char* cellid, char* lac)
 {
 	char tmpBuff[20];
 
 	// Compose and send SMS
 	getATReply(F("AT+CMGF=1"), atTimeout); // Select TEXT mode
 	Serial1.print(F("AT+CMGS=\""));
-	sprintf(tmpBuff, "%s", tel);
+	snprintf(tmpBuff, 19, "%s", tel);
 	Serial1.print(tmpBuff);
 	Serial1.println("\"");
 	delay(100);
@@ -561,8 +561,10 @@ void sendGsmPosSMS(const char* tel, const char* mcc, const char* mnc, const char
 	Serial1.print(F("MNC: "));
 	Serial1.println(mnc);
 	Serial1.print(F("CELLID: "));
+	snprintf(cellid,MAXBUFFER - 1, "%u", strtol(cellid,NULL,16));
 	Serial1.println(cellid);
 	Serial1.print(F("LAC: "));
+	snprintf(lac,MAXBUFFER - 1, "%u", strtol(lac,NULL,16));
 	Serial1.println(lac);
 	Serial1.println();
 	Serial1.print(F("http://opencellid.org/#action=locations.cell&mcc="));
@@ -767,7 +769,7 @@ void parseSMS(const char *msg, const char *num)
 	else if ( strcasecmp(cmd, "INFO") == 0 )
 	{
 		// INFO function: INFO# sends debug info
-		sendSMS(num, "hereyouARE - $Revision: 2.0 $ Xadow", true);
+		sendSMS(num, "hereyouARE - $Revision: 2.1 $ Xadow", true);
 	}
 	else
 #ifdef UBIDOTS
@@ -818,7 +820,7 @@ void deleteOneSMS(int idx)
 	char tmpBuff[15];
 
 	// Delete the SMS indexed as "idx"
-	sprintf(tmpBuff, "AT+CMGD=%d", idx);
+	snprintf(tmpBuff, 14, "AT+CMGD=%d", idx);
 
 	while ( getATReplyCheck(tmpBuff, F("OK"), atTimeout) == false ) ;
 
@@ -866,7 +868,7 @@ int parseGSMPos(char* CENGstr, char* gsmMcc, char* gsmMnc, char* gsmCellid, char
 	 * Needed parameters are MCC, MNC, CELLID and LAC
 	 * Format is:
 	 *
-	 * <CELL>,"<ARFCN>,<RXL>,<RXQ>,<MCC>,<MCN>,<BSIC>,<CELLID>,<LAC>,<RLA>,<TXP>,<TA>"
+	 * <CELL>,"<ARFCN>,<RXL>,<RXQ>,<MCC>,<MCN>,<BSIC>,<CELLID>,<RLA>,<TXP>,<LAC>,<TA>"
 	 *
 	 *
 	 */
@@ -907,6 +909,12 @@ int parseGSMPos(char* CENGstr, char* gsmMcc, char* gsmMnc, char* gsmCellid, char
 		if ( !cellid ) return(-1);
 		strncpy(gsmCellid,cellid,MAXBUFFER - 1);
 
+		// Skip some fields
+		for (int i=0; i < 2; i++ )
+		{
+			skip = strsep(&CENGstr, ",");
+		}
+
 		// Get LAC
 		lac = strsep(&CENGstr, ",");
 		if ( !lac ) return(-1);
@@ -916,16 +924,16 @@ int parseGSMPos(char* CENGstr, char* gsmMcc, char* gsmMnc, char* gsmCellid, char
 		if ( debug >= 1 )
 		{
 			Serial.print(F("--> GSM MCC: "));
-			sprintf(buff, "%s", gsmMcc);
+			snprintf(buff, MAXBUFFER - 1, "%s", gsmMcc);
 			Serial.println(buff);
 			Serial.print(F("--> GSM MNC: "));
-			sprintf(buff, "%s", gsmMnc);
+			snprintf(buff, MAXBUFFER - 1, "%s", gsmMnc);
 			Serial.println(buff);
 			Serial.print(F("--> GSM CELLID: "));
-			sprintf(buff, "%s", gsmCellid);
+			snprintf(buff, MAXBUFFER - 1, "%s", gsmCellid);
 			Serial.println(buff);
 			Serial.print(F("--> GSM LAC: "));
-			sprintf(buff, "%s", gsmLac);
+			snprintf(buff, MAXBUFFER - 1, "%s", gsmLac);
 			Serial.println(buff);
 		}
 #endif
@@ -1121,10 +1129,10 @@ int parseCGNSINF(char* CGNSINFstr, char* coordinates, char* gpsAlt, int *satNum,
 		if ( debug >= 1 )
 		{
 			Serial.print(F("--> Fix Status: "));
-			sprintf(buff, "%d", gpsFix);
+			snprintf(buff, MAXBUFFER - 1, "%d", gpsFix);
 			Serial.println(buff);
 			Serial.print(F("--> Date and time: "));
-			sprintf(buff, "%lu", *gpsDate);
+			snprintf(buff, MAXBUFFER - 1, "%lu", *gpsDate);
 			Serial.println(buff);
 			Serial.print(F("--> Coordinates: "));
 			Serial.println(coordinates);
@@ -1133,7 +1141,7 @@ int parseCGNSINF(char* CGNSINFstr, char* coordinates, char* gpsAlt, int *satNum,
 			Serial.print(F("--> Speed: "));
 			Serial.println(gpsSpeed);
 			Serial.print(F("--> Num of Satellites: "));
-			sprintf(buff, "%d", *satNum);
+			snprintf(buff, MAXBUFFER - 1, "%d", *satNum);
 			Serial.println(buff);
 		}
 //#endif
@@ -1869,7 +1877,7 @@ void ubidotsSaveValue(char *value)
 	strcat(var, "}}");
 
 	num = strlen(var);
-	sprintf(len, "%d", num);
+	snprintf(len, 3, "%d", num);
 
 	getATReply(F("AT+CGATT?"), atTimeout);
 
